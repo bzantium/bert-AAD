@@ -52,12 +52,6 @@ def XML2Array(neg_path, pos_path):
     return reviews, labels
 
 
-def TSV2Array(path):
-    data = pd.read_csv(path, delimiter='\t')
-    reviews, labels = data.reviews.values.tolist(), data.labels.values.tolist()
-    return reviews, labels
-
-
 def CSV2Array(path):
     data = pd.read_csv(path, encoding='latin')
     reviews, labels = data.reviews.values.tolist(), data.labels.values.tolist()

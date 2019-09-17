@@ -3,7 +3,7 @@
 import param
 from train import pretrain, adapt, evaluate
 from model import BERTEncoder, BERTClassifier, Discriminator
-from utils import XML2Array, TSV2Array, CSV2Array, convert_examples_to_features, \
+from utils import XML2Array, CSV2Array, convert_examples_to_features, \
     get_data_loader, init_model
 from sklearn.model_selection import train_test_split
 from pytorch_transformers import BertTokenizer
@@ -75,7 +75,7 @@ def main():
     # preprocess data
     print("=== Processing datasets ===")
     if args.src == 'blog':
-        reviews, labels = TSV2Array(os.path.join('data', args.src, 'blog.review'))
+        reviews, labels = CSV2Array(os.path.join('data', args.src, 'blog.csv'))
 
     elif args.src == 'airline':
         reviews, labels = CSV2Array(os.path.join('data', args.src, 'airline.csv'))
@@ -91,7 +91,7 @@ def main():
     del reviews, labels
 
     if args.tgt == 'blog':
-        tgt_x, tgt_y = TSV2Array(os.path.join('data', args.tgt, 'blog.review'))
+        tgt_x, tgt_y = CSV2Array(os.path.join('data', args.tgt, 'blog.csv'))
 
     elif args.tgt == 'airline':
         tgt_x, tgt_y = CSV2Array(os.path.join('data', args.tgt, 'airline.csv'))
