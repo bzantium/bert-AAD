@@ -35,7 +35,7 @@ def parse_arguments():
     parser.add_argument('--max_seq_length', type=int, default=128,
                         help="Specify maximum sequence length")
 
-    parser.add_argument('--temperature', type=int, default=5,
+    parser.add_argument('--temperature', type=int, default=10,
                         help="Specify temperature")
 
     parser.add_argument('--batch_size', type=int, default=64,
@@ -68,7 +68,7 @@ def main():
     print("num_epochs_pre: " + str(args.pre_epochs))
     print("pre_log_step: " + str(args.pre_log_step))
     print("num_epochs: " + str(args.num_epochs))
-    print("log_step: " + str(args.log_step))
+    print("temperature: " + str(args.temperature))
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -99,20 +99,22 @@ def main():
         tgt_x, tgt_y = XML2Array(os.path.join('data', args.tgt, 'negative.review'),
                                  os.path.join('data', args.tgt, 'positive.review'))
 
-    tgt_x, _, tgt_y, _ = train_test_split(tgt_x, tgt_y,
-                                          test_size=0.2,
-                                          stratify=tgt_y,
-                                          random_state=args.random_state)
+    tgt_x, tgt_test_x, tgt_y, tgt_test_y = train_test_split(tgt_x, tgt_y,
+                                                            test_size=0.2,
+                                                            stratify=tgt_y,
+                                                            random_state=args.random_state)
 
     src_train_features = convert_examples_to_features(src_train_x, src_train_y, args.max_seq_length, tokenizer)
     src_test_features = convert_examples_to_features(src_test_x, src_test_y, args.max_seq_length, tokenizer)
     tgt_features = convert_examples_to_features(tgt_x, tgt_y, args.max_seq_length, tokenizer)
+    tgt_test_features = convert_examples_to_features(tgt_test_x, tgt_test_y, args.max_seq_length, tokenizer)
 
     # load dataset
 
     src_data_loader = get_data_loader(src_train_features, args.batch_size)
     src_data_loader_eval = get_data_loader(src_test_features, args.batch_size)
     tgt_data_loader = get_data_loader(tgt_features, args.batch_size)
+    tgt_data_loader_eval = get_data_loader(tgt_test_features, args.batch_size)
 
     # load models
     src_encoder = BERTEncoder()
@@ -140,6 +142,7 @@ def main():
     evaluate(src_encoder, src_classifier, src_data_loader)
     evaluate(src_encoder, src_classifier, src_data_loader_eval)
     evaluate(src_encoder, src_classifier, tgt_data_loader)
+    evaluate(src_encoder, src_classifier, tgt_data_loader_eval)
 
     for params in src_encoder.parameters():
         params.requires_grad = False
@@ -159,9 +162,9 @@ def main():
     # eval target encoder on lambda0.1 set of target dataset
     print("=== Evaluating classifier for encoded target domain ===")
     print(">>> source only <<<")
-    evaluate(src_encoder, src_classifier, tgt_data_loader)
+    evaluate(src_encoder, src_classifier, tgt_data_loader_eval)
     print(">>> domain adaption <<<")
-    evaluate(tgt_encoder, src_classifier, tgt_data_loader)
+    evaluate(tgt_encoder, src_classifier, tgt_data_loader_eval)
 
 
 if __name__ == '__main__':

@@ -124,8 +124,8 @@ def adapt(args, src_encoder, tgt_encoder, critic,
 
             # compute loss for critic
             # loss_critic = criterion(pred_concat.squeeze_(), label_concat)
-            loss_dis = CELoss(pred_concat, label_concat)
-            loss_dis.backward()
+            dis_loss = CELoss(pred_concat, label_concat)
+            dis_loss.backward()
 
             # optimize critic
             optimizer_critic.step()
@@ -149,12 +149,12 @@ def adapt(args, src_encoder, tgt_encoder, critic,
             with torch.no_grad():
                 src_logits = F.softmax(src_classifier(feat_src) / T, dim=-1)
             tgt_logits = F.log_softmax(src_classifier(feat_src_tgt) / T, dim=-1)
-            loss_kld = KLDivLoss(tgt_logits, src_logits.detach())
+            dist_loss = KLDivLoss(tgt_logits, src_logits.detach())
 
             # compute loss for target encoder
-            loss_gen = CELoss(pred_tgt, label_tgt)
+            gen_loss = CELoss(pred_tgt, label_tgt)
             alpha = torch.exp(-1/(feat_tgt.mean(dim=0) - feat_src_tgt.mean(dim=0)).norm())
-            loss_tgt = alpha + loss_gen + loss_kld * T * T
+            loss_tgt = alpha + gen_loss + dist_loss * T * T
             loss_tgt.backward()
 
             # optimize target encoder
@@ -165,15 +165,15 @@ def adapt(args, src_encoder, tgt_encoder, critic,
             #######################
             if (step + 1) % args.log_step == 0:
                 print("Epoch [%.2d/%.2d] Step [%.3d/%.3d]: "
-                      "acc=%.4f d_loss=%.4f g_loss=%.4f kld_loss=%.4f alpha=%.4f"
+                      "acc=%.4f d_loss=%.4f g_loss=%.4f dist_loss=%.4f alpha=%.4f"
                       % (epoch + 1,
                          args.num_epochs,
                          step + 1,
                          len_data_loader,
                          acc.item(),
-                         loss_dis.item(),
-                         loss_gen.item(),
-                         loss_kld.item(),
+                         dis_loss.item(),
+                         gen_loss.item(),
+                         dist_loss.item(),
                          alpha.item()))
 
         evaluate(tgt_encoder, src_classifier, tgt_data_loader)
