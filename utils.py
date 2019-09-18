@@ -91,18 +91,45 @@ def init_model(net, restore=None):
     return net
 
 
-def save_model(net, filename):
+def save_model(net, path):
     """Save trained model."""
-    if not os.path.exists(param.model_root):
-        os.makedirs(param.model_root)
-    torch.save(net.state_dict(),
-               os.path.join(param.model_root, filename))
-    print("save pretrained model to: {}".format(os.path.join(param.model_root, filename)))
+    folder_name = os.path.dirname(path)
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+    torch.save(net.state_dict(), path)
+    print("save pretrained model to: {}".format(path))
 
 
 def convert_examples_to_features(reviews, labels, max_seq_length, tokenizer,
                                  cls_token='[CLS]', sep_token='[SEP]',
                                  pad_token=0):
+    features = []
+    for ex_index, (review, label) in enumerate(zip(reviews, labels)):
+        if (ex_index + 1) % 200 == 0:
+            print("writing example %d of %d" % (ex_index + 1, len(reviews)))
+        tokens = tokenizer.tokenize(review)
+        if len(tokens) > max_seq_length - 2:
+            tokens = tokens[:(max_seq_length - 2)]
+        tokens = [cls_token] + tokens + [sep_token]
+        input_ids = tokenizer.convert_tokens_to_ids(tokens)
+        input_mask = [1] * len(input_ids)
+        padding_length = max_seq_length - len(input_ids)
+        input_ids = input_ids + ([pad_token] * padding_length)
+        input_mask = input_mask + ([0] * padding_length)
+
+        assert len(input_ids) == max_seq_length
+        assert len(input_mask) == max_seq_length
+
+        features.append(
+            InputFeatures(input_ids=input_ids,
+                          input_mask=input_mask,
+                          label_id=label))
+    return features
+
+
+def roberta_convert_examples_to_features(reviews, labels, max_seq_length, tokenizer,
+                                         cls_token='<s>', sep_token='</s>',
+                                         pad_token=1):
     features = []
     for ex_index, (review, label) in enumerate(zip(reviews, labels)):
         if (ex_index + 1) % 200 == 0:

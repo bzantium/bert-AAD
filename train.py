@@ -3,7 +3,6 @@
 import torch
 from utils import make_cuda
 import torch.nn.functional as F
-import numpy as np
 import torch.nn as nn
 import param
 import torch.optim as optim
@@ -18,8 +17,7 @@ def pretrain(args, encoder, classifier, data_loader):
 
     # setup criterion and optimizer
     optimizer = optim.Adam(list(encoder.parameters()) + list(classifier.parameters()),
-                           lr=param.c_learning_rate,
-                           betas=(param.beta1, param.beta2))
+                           lr=param.c_learning_rate)
     criterion = nn.CrossEntropyLoss()
 
     # set train state for Dropout and BN layers
@@ -58,14 +56,14 @@ def pretrain(args, encoder, classifier, data_loader):
                          cls_loss.item()))
 
     # save final model
-    save_model(encoder, "ADDA-source-encoder-final.pt")
-    save_model(classifier, "ADDA-source-classifier-final.pt")
+    save_model(encoder, param.src_encoder_path)
+    save_model(classifier, param.src_classifier_path)
 
     return encoder, classifier
 
 
 def adapt(args, src_encoder, tgt_encoder, critic,
-          src_classifier, src_data_loader, tgt_data_loader):
+          src_classifier, src_data_loader, tgt_data_loader, tgt_data_loader_eval):
     """Train encoder for target domain."""
     ####################
     # 1. setup network #
@@ -80,11 +78,8 @@ def adapt(args, src_encoder, tgt_encoder, critic,
     # setup criterion and optimizer
     CELoss = nn.CrossEntropyLoss()
     KLDivLoss = nn.KLDivLoss(reduction='batchmean')
-    MSELoss = nn.MSELoss()
-    optimizer_tgt = optim.Adam(tgt_encoder.parameters(), lr=param.d_learning_rate,
-                               betas=(param.beta1, param.beta2))
-    optimizer_critic = optim.Adam(critic.parameters(), lr=param.d_learning_rate,
-                                  betas=(param.beta1, param.beta2))
+    optimizer_tgt = optim.Adam(tgt_encoder.parameters(), lr=param.d_learning_rate)
+    optimizer_critic = optim.Adam(critic.parameters(), lr=param.d_learning_rate)
     len_data_loader = min(len(src_data_loader), len(tgt_data_loader))
 
     ####################
@@ -177,6 +172,7 @@ def adapt(args, src_encoder, tgt_encoder, critic,
                          alpha.item()))
 
         evaluate(tgt_encoder, src_classifier, tgt_data_loader)
+        evaluate(tgt_encoder, src_classifier, tgt_data_loader_eval)
 
     return tgt_encoder
 

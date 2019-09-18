@@ -10,15 +10,15 @@ data_root = "data"
 process_root = "data/processed"
 
 # params for source dataset
-src_encoder_restore = "snapshots/ADDA-source-encoder-final.pt"
-src_classifier_restore = "snapshots/ADDA-source-classifier-final.pt"
+src_encoder_path = "snapshots/source-encoder.pt"
+src_classifier_path = "snapshots/source-classifier.pt"
 
 # params for target dataset
-tgt_encoder_restore = "snapshots/ADDA-target-encoder-final.pt"
+tgt_encoder_path = "snapshots/target-encoder.pt"
 
 # params for setting up models
 model_root = "snapshots"
-d_model_restore = "snapshots/ADDA-critic-final.pt"
+d_model_path = "snapshots/critic.pt"
 
 # params for training network
 num_gpu = 1
@@ -27,8 +27,6 @@ manual_seed = None
 # params for optimizing models
 c_learning_rate = 5e-5
 d_learning_rate = 1e-5
-beta1 = 0.9
-beta2 = 0.999
 
 n_vocab = 30522
 hidden_size = 768
