@@ -89,6 +89,8 @@ class Discriminator(nn.Module):
         self.layer = nn.Sequential(
             nn.Linear(param.hidden_size, param.intermediate_size),
             nn.LeakyReLU(),
+            nn.Linear(param.intermediate_size, param.intermediate_size),
+            nn.LeakyReLU(),
             nn.Linear(param.intermediate_size, param.num_labels)
         )
 

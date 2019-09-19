@@ -18,7 +18,7 @@ def pretrain(args, encoder, classifier, data_loader):
     # setup criterion and optimizer
     optimizer = optim.Adam(list(encoder.parameters()) + list(classifier.parameters()),
                            lr=param.c_learning_rate)
-    criterion = nn.CrossEntropyLoss()
+    CELoss = nn.CrossEntropyLoss()
 
     # set train state for Dropout and BN layers
     encoder.train()
@@ -40,7 +40,7 @@ def pretrain(args, encoder, classifier, data_loader):
             # compute loss for critic
             feat = encoder(reviews, mask)
             preds = classifier(feat)
-            cls_loss = criterion(preds, labels)
+            cls_loss = CELoss(preds, labels)
 
             # optimize source classifier
             cls_loss.backward()
@@ -105,8 +105,8 @@ def adapt(args, src_encoder, tgt_encoder, critic,
             # extract and concat features
             with torch.no_grad():
                 feat_src = src_encoder(reviews_src, src_mask)
-            feat_tgt = tgt_encoder(reviews_tgt, tgt_mask)
             feat_src_tgt = tgt_encoder(reviews_src, src_mask)
+            feat_tgt = tgt_encoder(reviews_tgt, tgt_mask)
             feat_concat = torch.cat((feat_src_tgt, feat_tgt), 0)
 
             # predict on discriminator
@@ -142,14 +142,14 @@ def adapt(args, src_encoder, tgt_encoder, critic,
 
             # logits for KL-divergence
             with torch.no_grad():
-                src_logits = F.softmax(src_classifier(feat_src) / T, dim=-1)
-            tgt_logits = F.log_softmax(src_classifier(feat_src_tgt) / T, dim=-1)
-            dist_loss = KLDivLoss(tgt_logits, src_logits.detach())
+                src_prob = F.softmax(src_classifier(feat_src) / T, dim=-1)
+            tgt_prob = F.log_softmax(src_classifier(feat_src_tgt) / T, dim=-1)
+            dist_loss = KLDivLoss(tgt_prob, src_prob.detach())
 
             # compute loss for target encoder
-            gen_loss = CELoss(pred_tgt, label_tgt)
-            alpha = torch.exp(-1/(feat_tgt.mean(dim=0) - feat_src_tgt.mean(dim=0)).norm())
-            loss_tgt = alpha + gen_loss + dist_loss * T * T
+            gen_loss = CELoss(pred_tgt, label_src)
+            regularizer = torch.exp(-1/(feat_tgt.mean(dim=0) - feat_src_tgt.mean(dim=0)).norm())
+            loss_tgt = gen_loss + dist_loss * T * T + regularizer
             loss_tgt.backward()
 
             # optimize target encoder
@@ -160,16 +160,16 @@ def adapt(args, src_encoder, tgt_encoder, critic,
             #######################
             if (step + 1) % args.log_step == 0:
                 print("Epoch [%.2d/%.2d] Step [%.3d/%.3d]: "
-                      "acc=%.4f d_loss=%.4f g_loss=%.4f dist_loss=%.4f alpha=%.4f"
+                      "acc=%.4f g_loss=%.4f d_loss=%.4f dist_loss=%.4f regularizer=%.4f"
                       % (epoch + 1,
                          args.num_epochs,
                          step + 1,
                          len_data_loader,
                          acc.item(),
-                         dis_loss.item(),
                          gen_loss.item(),
+                         dis_loss.item(),
                          dist_loss.item(),
-                         alpha.item()))
+                         regularizer.item()))
 
         evaluate(tgt_encoder, src_classifier, tgt_data_loader)
         evaluate(tgt_encoder, src_classifier, tgt_data_loader_eval)
