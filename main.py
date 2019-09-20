@@ -162,15 +162,15 @@ def main():
     critic = Discriminator()
 
     if args.load:
-        src_encoder = init_model(src_encoder, restore=param.src_encoder_path)
-        src_classifier = init_model(src_classifier, restore=param.src_classifier_path)
-        tgt_encoder = init_model(tgt_encoder, restore=param.tgt_encoder_path)
-        critic = init_model(critic, restore=param.d_model_path)
+        src_encoder = init_model(args, src_encoder, restore=param.src_encoder_path)
+        src_classifier = init_model(args, src_classifier, restore=param.src_classifier_path)
+        tgt_encoder = init_model(args, tgt_encoder, restore=param.tgt_encoder_path)
+        critic = init_model(args, critic, restore=param.d_model_path)
     else:
-        src_encoder = init_model(src_encoder)
-        src_classifier = init_model(src_classifier)
-        tgt_encoder = init_model(tgt_encoder)
-        critic = init_model(critic)
+        src_encoder = init_model(args, src_encoder)
+        src_classifier = init_model(args, src_classifier)
+        tgt_encoder = init_model(args, tgt_encoder)
+        critic = init_model(args, critic)
 
     # train source model
     print("=== Training classifier for source domain ===")

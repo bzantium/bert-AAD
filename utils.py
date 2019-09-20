@@ -78,11 +78,12 @@ def init_random_seed(manual_seed):
         torch.cuda.manual_seed_all(seed)
 
 
-def init_model(net, restore=None):
+def init_model(args, net, restore=None):
     # restore model weights
-    if restore is not None and os.path.exists(restore):
-        net.load_state_dict(torch.load(restore))
-        print("Restore model from: {}".format(os.path.abspath(restore)))
+    path = os.path.join(param.model_root, args.src, args.model, restore)
+    if restore is not None and os.path.exists(path):
+        net.load_state_dict(torch.load(path))
+        print("Restore model from: {}".format(os.path.abspath(path)))
 
     # check if cuda is available
     if torch.cuda.is_available():
@@ -91,11 +92,12 @@ def init_model(net, restore=None):
     return net
 
 
-def save_model(net, path):
+def save_model(args, net, name):
     """Save trained model."""
-    folder_name = os.path.dirname(path)
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
+    folder = os.path.join(param.model_root, args.src, args.model)
+    path = os.path.join(folder, name)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
     torch.save(net.state_dict(), path)
     print("save pretrained model to: {}".format(path))
 

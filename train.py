@@ -56,8 +56,8 @@ def pretrain(args, encoder, classifier, data_loader):
                          cls_loss.item()))
 
     # save final model
-    save_model(encoder, param.src_encoder_path)
-    save_model(classifier, param.src_classifier_path)
+    save_model(args, encoder, param.src_encoder_path)
+    save_model(args, classifier, param.src_classifier_path)
 
     return encoder, classifier
 

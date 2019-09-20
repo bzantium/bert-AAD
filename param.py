@@ -7,18 +7,17 @@ EOS = 3
 
 # params for dataset and data loader
 data_root = "data"
-process_root = "data/processed"
 
 # params for source dataset
-src_encoder_path = "snapshots/source-encoder.pt"
-src_classifier_path = "snapshots/source-classifier.pt"
+src_encoder_path = "source-encoder.pt"
+src_classifier_path = "source-classifier.pt"
 
 # params for target dataset
-tgt_encoder_path = "snapshots/target-encoder.pt"
+tgt_encoder_path = "target-encoder.pt"
 
 # params for setting up models
 model_root = "snapshots"
-d_model_path = "snapshots/critic.pt"
+d_model_path = "critic.pt"
 
 # params for training network
 num_gpu = 1
