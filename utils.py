@@ -80,10 +80,11 @@ def init_random_seed(manual_seed):
 
 def init_model(args, net, restore=None):
     # restore model weights
-    path = os.path.join(param.model_root, args.src, args.model, restore)
-    if restore is not None and os.path.exists(path):
-        net.load_state_dict(torch.load(path))
-        print("Restore model from: {}".format(os.path.abspath(path)))
+    if restore is not None:
+        path = os.path.join(param.model_root, args.src, args.model, restore)
+        if os.path.exists(path):
+            net.load_state_dict(torch.load(path))
+            print("Restore model from: {}".format(os.path.abspath(path)))
 
     # check if cuda is available
     if torch.cuda.is_available():
