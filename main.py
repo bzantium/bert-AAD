@@ -191,12 +191,10 @@ def main():
     for params in src_classifier.parameters():
         params.requires_grad = False
 
-    if args.adapt:
-        tgt_encoder.load_state_dict(src_encoder.state_dict())
-
     # train target encoder by GAN
     print("=== Training encoder for target domain ===")
     if args.adapt:
+        tgt_encoder.load_state_dict(src_encoder.state_dict())
         tgt_encoder = adapt(args, src_encoder, tgt_encoder, critic,
                             src_classifier, src_data_loader, tgt_data_loader, tgt_data_loader_eval)
 
