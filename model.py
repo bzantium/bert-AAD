@@ -91,7 +91,7 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(param.intermediate_size, param.intermediate_size),
             nn.LeakyReLU(),
-            nn.Linear(param.intermediate_size, param.num_labels)
+            nn.Linear(param.intermediate_size, 1)
         )
 
     def forward(self, x):

@@ -51,6 +51,12 @@ def parse_arguments():
     parser.add_argument('--temperature', type=int, default=10,
                         help="Specify temperature")
 
+    parser.add_argument("--max_grad_norm", default=1.0, type=float,
+                        help="Max gradient norm.")
+
+    parser.add_argument("--clip_value", type=float, default=0.01,
+                        help="lower and upper clip value for disc. weights")
+
     parser.add_argument('--batch_size', type=int, default=64,
                         help="Specify batch size")
 
@@ -123,28 +129,28 @@ def main():
         tgt_x, tgt_y = XML2Array(os.path.join('data', args.tgt, 'negative.review'),
                                  os.path.join('data', args.tgt, 'positive.review'))
 
-    tgt_x, tgt_test_x, tgt_y, tgt_test_y = train_test_split(tgt_x, tgt_y,
-                                                            test_size=0.2,
-                                                            stratify=tgt_y,
-                                                            random_state=args.seed)
+    tgt_train_x, tgt_test_y, tgt_train_y, tgt_test_y = train_test_split(tgt_x, tgt_y,
+                                                                        test_size=0.2,
+                                                                        stratify=tgt_y,
+                                                                        random_state=args.seed)
 
     if args.model == 'roberta':
         src_features = roberta_convert_examples_to_features(src_x, src_y, args.max_seq_length, tokenizer)
         src_test_features = roberta_convert_examples_to_features(src_test_x, src_test_y, args.max_seq_length, tokenizer)
         tgt_features = roberta_convert_examples_to_features(tgt_x, tgt_y, args.max_seq_length, tokenizer)
-        tgt_test_features = roberta_convert_examples_to_features(tgt_test_x, tgt_test_y, args.max_seq_length, tokenizer)
+        tgt_train_features = roberta_convert_examples_to_features(tgt_train_x, tgt_train_y, args.max_seq_length, tokenizer)
     else:
         src_features = convert_examples_to_features(src_x, src_y, args.max_seq_length, tokenizer)
         src_test_features = convert_examples_to_features(src_test_x, src_test_y, args.max_seq_length, tokenizer)
         tgt_features = convert_examples_to_features(tgt_x, tgt_y, args.max_seq_length, tokenizer)
-        tgt_test_features = convert_examples_to_features(tgt_test_x, tgt_test_y, args.max_seq_length, tokenizer)
+        tgt_train_features = convert_examples_to_features(tgt_train_x, tgt_train_y, args.max_seq_length, tokenizer)
 
     # load dataset
 
     src_data_loader = get_data_loader(src_features, args.batch_size)
-    src_data_loader_eval = get_data_loader(src_test_features, args.batch_size)
-    tgt_data_loader = get_data_loader(tgt_features, args.batch_size)
-    tgt_data_loader_eval = get_data_loader(tgt_test_features, args.batch_size)
+    src_data_eval_loader = get_data_loader(src_test_features, args.batch_size)
+    tgt_data_train_loader = get_data_loader(tgt_train_features, args.batch_size)
+    tgt_data_all_loader = get_data_loader(tgt_features, args.batch_size)
 
     # load models
     if args.model == 'bert':
@@ -159,18 +165,18 @@ def main():
         src_encoder = RobertaEncoder()
         tgt_encoder = RobertaEncoder()
         src_classifier = RobertaClassifier()
-    critic = Discriminator()
+    discriminator = Discriminator()
 
     if args.load:
         src_encoder = init_model(args, src_encoder, restore=param.src_encoder_path)
         src_classifier = init_model(args, src_classifier, restore=param.src_classifier_path)
         tgt_encoder = init_model(args, tgt_encoder, restore=param.tgt_encoder_path)
-        critic = init_model(args, critic, restore=param.d_model_path)
+        discriminator = init_model(args, discriminator, restore=param.d_model_path)
     else:
         src_encoder = init_model(args, src_encoder)
         src_classifier = init_model(args, src_classifier)
         tgt_encoder = init_model(args, tgt_encoder)
-        critic = init_model(args, critic)
+        discriminator = init_model(args, discriminator)
 
     # train source model
     print("=== Training classifier for source domain ===")
@@ -181,9 +187,8 @@ def main():
     # eval source model
     print("=== Evaluating classifier for source domain ===")
     evaluate(src_encoder, src_classifier, src_data_loader)
-    evaluate(src_encoder, src_classifier, src_data_loader_eval)
-    evaluate(src_encoder, src_classifier, tgt_data_loader)
-    evaluate(src_encoder, src_classifier, tgt_data_loader_eval)
+    evaluate(src_encoder, src_classifier, src_data_eval_loader)
+    evaluate(src_encoder, src_classifier, tgt_data_all_loader)
 
     for params in src_encoder.parameters():
         params.requires_grad = False
@@ -195,15 +200,15 @@ def main():
     print("=== Training encoder for target domain ===")
     if args.adapt:
         tgt_encoder.load_state_dict(src_encoder.state_dict())
-        tgt_encoder = adapt(args, src_encoder, tgt_encoder, critic,
-                            src_classifier, src_data_loader, tgt_data_loader, tgt_data_loader_eval)
+        tgt_encoder = adapt(args, src_encoder, tgt_encoder, discriminator,
+                            src_classifier, src_data_loader, tgt_data_train_loader, tgt_data_all_loader)
 
     # eval target encoder on lambda0.1 set of target dataset
     print("=== Evaluating classifier for encoded target domain ===")
     print(">>> source only <<<")
-    evaluate(src_encoder, src_classifier, tgt_data_loader_eval)
+    evaluate(src_encoder, src_classifier, tgt_data_all_loader)
     print(">>> domain adaption <<<")
-    evaluate(tgt_encoder, src_classifier, tgt_data_loader_eval)
+    evaluate(tgt_encoder, src_classifier, tgt_data_all_loader)
 
 
 if __name__ == '__main__':
