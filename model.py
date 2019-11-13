@@ -1,7 +1,7 @@
 import torch
 import param
 import torch.nn as nn
-from pytorch_transformers import BertModel, DistilBertModel, RobertaModel
+from transformers import BertModel, DistilBertModel, RobertaModel
 
 
 class BertEncoder(nn.Module):
@@ -33,6 +33,19 @@ class RobertaEncoder(nn.Module):
     def __init__(self):
         super(RobertaEncoder, self).__init__()
         self.encoder = RobertaModel.from_pretrained('roberta-base')
+
+    def forward(self, x, mask=None):
+        outputs = self.encoder(x, attention_mask=mask)
+        sequence_output = outputs[0]
+        feat = sequence_output[:, 0, :]
+        return feat
+
+
+class DistilRobertaEncoder(nn.Module):
+    def __init__(self):
+        super(DistilRobertaEncoder, self).__init__()
+        self.encoder = RobertaModel.from_pretrained('distilroberta-base')
+        self.pooler = nn.Linear(param.hidden_size, param.hidden_size)
 
     def forward(self, x, mask=None):
         outputs = self.encoder(x, attention_mask=mask)
@@ -91,7 +104,8 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(param.intermediate_size, param.intermediate_size),
             nn.LeakyReLU(),
-            nn.Linear(param.intermediate_size, 1)
+            nn.Linear(param.intermediate_size, 1),
+            nn.Sigmoid()
         )
 
     def forward(self, x):
