@@ -1,4 +1,4 @@
-# Adversarial Discrimination and Distillation for BERT Unsupervised Domain Adaptation
+# Adversarial Adaptation with Distillation for BERT Unsupervised Domain Adaptation
 
 
 ## Requirements
