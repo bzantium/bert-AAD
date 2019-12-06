@@ -165,3 +165,8 @@ def get_data_loader(features, batch_size):
     sampler = RandomSampler(dataset)
     dataloader = DataLoader(dataset, sampler=sampler, batch_size=batch_size)
     return dataloader
+
+
+def MMD(source, target):
+    mmd_loss = torch.exp(-1 / (source.mean(dim=0) - target.mean(dim=0)).norm())
+    return mmd_loss
