@@ -3,7 +3,7 @@
 ## Requirements
 - pandas
 - pytorch
-- pytorch_transformers
+- transformers
 
 ## Run the test
 
