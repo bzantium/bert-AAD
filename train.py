@@ -127,9 +127,7 @@ def adapt(args, src_encoder, tgt_encoder, discriminator,
 
             # compute loss for target encoder
             gen_loss = BCELoss(pred_tgt, label_src)
-            # gen_loss = -torch.mean(discriminator(feat_tgt))
-            mmd_loss = torch.exp(-1/(feat_tgt.mean(dim=0) - feat_src_tgt.mean(dim=0)).norm())
-            loss_tgt = args.alpha * gen_loss + args.beta * kd_loss + args.gamma * mmd_loss
+            loss_tgt = args.alpha * gen_loss + args.beta * kd_loss
             loss_tgt.backward()
             torch.nn.utils.clip_grad_norm_(tgt_encoder.parameters(), args.max_grad_norm)
             # optimize target encoder

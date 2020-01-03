@@ -54,9 +54,6 @@ def parse_arguments():
     parser.add_argument('--beta', type=float, default=1.0,
                         help="Specify KD loss weight")
 
-    parser.add_argument('--gamma', type=float, default=0.0,
-                        help="Specify regularizer weight")
-
     parser.add_argument('--temperature', type=int, default=20,
                         help="Specify temperature")
 
@@ -106,7 +103,6 @@ def main():
     print("num_epochs: " + str(args.num_epochs))
     print("AD weight: " + str(args.alpha))
     print("KD weight: " + str(args.beta))
-    print("MMD weight: " + str(args.gamma))
     print("temperature: " + str(args.temperature))
     set_seed(args.train_seed)
 
