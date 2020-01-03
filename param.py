@@ -1,4 +1,4 @@
-"""Params for ADDA."""
+"""Params for AAD."""
 
 PAD = 0
 UNK = 1
