@@ -18,10 +18,10 @@ $ python main.py --pretrain --adapt --src books --tgt dvd
 
 ### How to cite
 ```
-@mastersthesis{ryu2020knowledge,
-title={Knowledge Distillation for BERT Unsupervised Domain Adaptation},
-author={Minho Ryu},
-year={2020},
-school={Hanyang University}
+@article{ryu2020knowledge,
+  title={Knowledge Distillation for BERT Unsupervised Domain Adaptation},
+  author={Ryu, Minho and Lee, Kichun},
+  journal={arXiv preprint arXiv:2010.11478},
+  year={2020}
 }
 ```
